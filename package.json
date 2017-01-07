@@ -11,7 +11,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/pmwisdom/cordova-background-geolocation-services.git"
+    "url": "git+https://github.com/devotebest/cordova-background-geolocation-services.git"
   },
   "keywords": [
     "gps",
@@ -33,7 +33,7 @@
   "author": "Paul Wisdom",
   "license": "Apache-2.0",
   "bugs": {
-    "url": "https://github.com/pmwisdom/cordova-background-geolocation-services/issues"
+    "url": "https://github.com/devotebest/cordova-background-geolocation-services/issues"
   },
-  "homepage": "https://github.com/pmwisdom/cordova-background-geolocation-services#readme"
+  "homepage": "https://github.com/devotebest/cordova-background-geolocation-services#readme"
 }
