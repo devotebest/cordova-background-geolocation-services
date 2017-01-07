@@ -14,7 +14,7 @@ import CoreMotion
 let TAG = "[LocationServices]";
 let PLUGIN_VERSION = "1.0";
 
-func log(message: String){
+func log(_ message: String){
     if(debug == true) {
         NSLog("%@ - %@", TAG, message)
     }
@@ -27,7 +27,7 @@ var taskManager = TaskManager();
 //Option Vars
 var distanceFilter = kCLDistanceFilterNone;
 var desiredAccuracy = kCLLocationAccuracyBest;
-var activityType = CLActivityType.AutomotiveNavigation;
+var activityType = CLActivityType.automotiveNavigation;
 var interval = 5.0;
 var debug: Bool?;
 var useActivityDetection = false;
@@ -56,22 +56,22 @@ var activityCommandDelegate:CDVCommandDelegate?;
         locationManager.requestLocationPermissions();
         self.promptForNotificationPermission();
 
-        NSNotificationCenter.defaultCenter().addObserver(
+        NotificationCenter.default.addObserver(
             self,
             selector: #selector(BackgroundLocationServices.onResume),
-            name: UIApplicationWillEnterForegroundNotification,
+            name: NSNotification.Name.UIApplicationWillEnterForeground,
             object: nil);
 
-        NSNotificationCenter.defaultCenter().addObserver(
+        NotificationCenter.default.addObserver(
             self,
             selector: #selector(BackgroundLocationServices.onSuspend),
-            name: UIApplicationDidEnterBackgroundNotification,
+            name: NSNotification.Name.UIApplicationDidEnterBackground,
             object: nil);
 
-        NSNotificationCenter.defaultCenter().addObserver(
+        NotificationCenter.default.addObserver(
             self,
             selector: #selector(BackgroundLocationServices.willResign),
-            name: UIApplicationWillResignActiveNotification,
+            name: NSNotification.Name.UIApplicationWillResignActive,
             object: nil);
     }
 
@@ -85,17 +85,17 @@ var activityCommandDelegate:CDVCommandDelegate?;
     // 7 notificationText-- (not used on ios),
     // 8 activityType, fences -- (not used ios)
     // 9 useActivityDetection
-    func configure(command: CDVInvokedUrlCommand) {
+    func configure(_ command: CDVInvokedUrlCommand) {
 
         //log("configure arguments: \(command.arguments)");
 
-        distanceFilter = command.argumentAtIndex(0) as! CLLocationDistance;
-        desiredAccuracy = self.toDesiredAccuracy((command.argumentAtIndex(1) as! Int));
-        interval = (Double)(command.argumentAtIndex(2) as! Int / 1000); // Millseconds to seconds
-        aggressiveInterval = (Double)(command.argumentAtIndex(4) as! Int / 1000); // Millseconds to seconds
-        activityType = self.toActivityType(command.argumentAtIndex(8) as! String);
-        debug = command.argumentAtIndex(5) as? Bool;
-        useActivityDetection = command.argumentAtIndex(9) as! Bool;
+        distanceFilter = command.argument(at: 0) as! CLLocationDistance;
+        desiredAccuracy = self.toDesiredAccuracy((command.argument(at: 1) as! Int));
+        interval = (Double)(command.argument(at: 2) as! Int / 1000); // Millseconds to seconds
+        aggressiveInterval = (Double)(command.argument(at: 4) as! Int / 1000); // Millseconds to seconds
+        activityType = self.toActivityType(command.argument(at: 8) as! String);
+        debug = command.argument(at: 5) as? Bool;
+        useActivityDetection = command.argument(at: 9) as! Bool;
 
         log("--------------------------------------------------------");
         log("   Configuration Success");
@@ -106,23 +106,23 @@ var activityCommandDelegate:CDVCommandDelegate?;
         log("--------------------------------------------------------");
 
         let pluginResult = CDVPluginResult(status: CDVCommandStatus_OK)
-        commandDelegate!.sendPluginResult(pluginResult, callbackId:command.callbackId)
+        commandDelegate!.send(pluginResult, callbackId:command.callbackId)
     }
 
-    func registerForLocationUpdates(command: CDVInvokedUrlCommand) {
+    func registerForLocationUpdates(_ command: CDVInvokedUrlCommand) {
         log("registerForLocationUpdates");
         locationUpdateCallback = command.callbackId;
         locationCommandDelegate = commandDelegate;
     }
 
-    func registerForActivityUpdates(command : CDVInvokedUrlCommand) {
+    func registerForActivityUpdates(_ command : CDVInvokedUrlCommand) {
         log("registerForActivityUpdates");
         activityUpdateCallback = command.callbackId;
         activityCommandDelegate = commandDelegate;
     }
 
 
-    func start(command: CDVInvokedUrlCommand) {
+    func start(_ command: CDVInvokedUrlCommand) {
         log("Started");
         enabled = true;
 
@@ -134,10 +134,10 @@ var activityCommandDelegate:CDVCommandDelegate?;
         }
 
         let pluginResult = CDVPluginResult(status: CDVCommandStatus_OK)
-        commandDelegate!.sendPluginResult(pluginResult, callbackId:command.callbackId)
+        commandDelegate!.send(pluginResult, callbackId:command.callbackId)
     }
 
-    func stop(command: CDVInvokedUrlCommand) {
+    func stop(_ command: CDVInvokedUrlCommand) {
         log("Stopped");
         enabled = false;
 
@@ -145,35 +145,35 @@ var activityCommandDelegate:CDVCommandDelegate?;
         activityManager.stopDetection();
 
         let pluginResult = CDVPluginResult(status: CDVCommandStatus_OK)
-        commandDelegate!.sendPluginResult(pluginResult, callbackId:command.callbackId)
+        commandDelegate!.send(pluginResult, callbackId:command.callbackId)
     }
 
-    func getVersion(command: CDVInvokedUrlCommand) {
+    func getVersion(_ command: CDVInvokedUrlCommand) {
         log("Returning Version \(PLUGIN_VERSION)");
 
-        let pluginResult = CDVPluginResult(status: CDVCommandStatus_OK, messageAsString: PLUGIN_VERSION);
-        commandDelegate!.sendPluginResult(pluginResult, callbackId: command.callbackId);
+        let pluginResult = CDVPluginResult(status: CDVCommandStatus_OK, messageAs: PLUGIN_VERSION);
+        commandDelegate!.send(pluginResult, callbackId: command.callbackId);
     }
 
-    func startAggressiveTracking(command: CDVInvokedUrlCommand) {
+    func startAggressiveTracking(_ command: CDVInvokedUrlCommand) {
         log("startAggressiveTracking");
         locationManager.startAggressiveTracking();
 
-        let pluginResult = CDVPluginResult(status: CDVCommandStatus_OK, messageAsString: PLUGIN_VERSION);
-        commandDelegate!.sendPluginResult(pluginResult, callbackId: command.callbackId);
+        let pluginResult = CDVPluginResult(status: CDVCommandStatus_OK, messageAs: PLUGIN_VERSION);
+        commandDelegate!.send(pluginResult, callbackId: command.callbackId);
 
     }
 
     func promptForNotificationPermission() {
         log("Prompting For Notification Permissions");
         if #available(iOS 8, *) {
-            UIApplication.sharedApplication().registerUserNotificationSettings(UIUserNotificationSettings(
-                forTypes: [UIUserNotificationType.Sound, UIUserNotificationType.Alert, UIUserNotificationType.Badge],
+            UIApplication.shared.registerUserNotificationSettings(UIUserNotificationSettings(
+                types: [UIUserNotificationType.sound, UIUserNotificationType.alert, UIUserNotificationType.badge],
                 categories: nil
                 )
             )
         } else {
-            UIApplication.sharedApplication().registerForRemoteNotificationTypes([UIRemoteNotificationType.Alert, UIRemoteNotificationType.Sound, UIRemoteNotificationType.Badge]);
+            UIApplication.shared.registerForRemoteNotifications(matching: [UIRemoteNotificationType.alert, UIRemoteNotificationType.sound, UIRemoteNotificationType.badge]);
         }
     }
 
@@ -217,7 +217,7 @@ var activityCommandDelegate:CDVCommandDelegate?;
     *     kCLLocationAccuracyThreeKilometers    3000 meters
     */
 
-    func toDesiredAccuracy(distance: Int) -> CLLocationAccuracy {
+    func toDesiredAccuracy(_ distance: Int) -> CLLocationAccuracy {
         if(distance == 0) {
             return kCLLocationAccuracyBestForNavigation;
         } else if(distance < 10) {
@@ -233,15 +233,15 @@ var activityCommandDelegate:CDVCommandDelegate?;
         }
     }
 
-    func toActivityType(type: String) -> CLActivityType {
+    func toActivityType(_ type: String) -> CLActivityType {
         if(type == "AutomotiveNavigation") {
-            return CLActivityType.AutomotiveNavigation;
+            return CLActivityType.automotiveNavigation;
         } else if(type == "OtherNavigation") {
-            return CLActivityType.OtherNavigation;
+            return CLActivityType.otherNavigation;
         } else if(type == "Fitness") {
-            return CLActivityType.Fitness;
+            return CLActivityType.fitness;
         } else {
-            return CLActivityType.AutomotiveNavigation;
+            return CLActivityType.automotiveNavigation;
         }
     }
 }
@@ -280,7 +280,7 @@ class LocationManager : NSObject, CLLocationManagerDelegate {
         }
     }
 
-    func locationToDict(loc:CLLocation) -> NSDictionary {
+    func locationToDict(_ loc:CLLocation) -> NSDictionary {
         let locDict:Dictionary = [
             "latitude" : loc.coordinate.latitude,
             "longitude" : loc.coordinate.longitude,
@@ -291,7 +291,7 @@ class LocationManager : NSObject, CLLocationManagerDelegate {
             "heading" : loc.course
         ]
 
-        return locDict;
+        return locDict as NSDictionary;
     }
 
     func stopBackgroundTracking() {
@@ -319,7 +319,7 @@ class LocationManager : NSObject, CLLocationManagerDelegate {
                 bestAccuracy = loc.horizontalAccuracy;
                 bestLocation = loc;
             } else if (loc.horizontalAccuracy == bestAccuracy) &&
-                (loc.timestamp.compare(bestLocation!.timestamp) == NSComparisonResult.OrderedDescending) {
+                (loc.timestamp.compare(bestLocation!.timestamp) == ComparisonResult.orderedDescending) {
                     bestAccuracy = loc.horizontalAccuracy;
                     bestLocation = loc;
             }
@@ -328,7 +328,7 @@ class LocationManager : NSObject, CLLocationManagerDelegate {
         log("bestLocation: {\(bestLocation)}");
 
         if bestLocation != nil {
-            locationArray.removeAll(keepCapacity: false);
+            locationArray.removeAll(keepingCapacity: false);
 
             let latitude = bestLocation!.coordinate.latitude;
             let longitude = bestLocation!.coordinate.longitude;
@@ -343,14 +343,14 @@ class LocationManager : NSObject, CLLocationManagerDelegate {
             log(msg);
             NotificationManager.manager.notify(msg);
 
-            locationCommandDelegate?.runInBackground({
+            locationCommandDelegate?.run(inBackground: {
 
                 var result:CDVPluginResult?;
-                let loc = self.locationToDict(bestLocation!) as [NSObject: AnyObject];
+                let loc = self.locationToDict(bestLocation!) as! [AnyHashable: Any];
 
-                result = CDVPluginResult(status: CDVCommandStatus_OK, messageAsDictionary:loc);
-                result!.setKeepCallbackAsBool(true);
-                locationCommandDelegate?.sendPluginResult(result, callbackId:locationUpdateCallback);
+                result = CDVPluginResult(status: CDVCommandStatus_OK, messageAs:loc);
+                result!.setKeepCallbackAs(true);
+                locationCommandDelegate?.send(result, callbackId:locationUpdateCallback);
             });
         }
     }
@@ -368,7 +368,7 @@ class LocationManager : NSObject, CLLocationManagerDelegate {
 
     // Force here is to make sure we are only starting the location updates once, until we want to restart them
     // Was having issues with it starting, and then starting a second time through resign on some builds.
-    func startUpdating(force : Bool) {
+    func startUpdating(_ force : Bool) {
         if(!self.updating || force) {
             self.enableBackgroundLocationUpdates();
             self.updating = true;
@@ -402,7 +402,7 @@ class LocationManager : NSObject, CLLocationManagerDelegate {
         self.manager.stopMonitoringSignificantLocationChanges();
     }
 
-    func locationManager(manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         let locationArray = locations as NSArray
         let locationObj = locationArray.lastObject as! CLLocation
 
@@ -426,14 +426,14 @@ class LocationManager : NSObject, CLLocationManagerDelegate {
 
         taskManager.beginNewBackgroundTask();
 
-        locationTimer = NSTimer.scheduledTimerWithTimeInterval(activityManager.isStationary ? stationaryTimout : interval, target: self, selector: #selector(LocationManager.restartUpdates), userInfo: nil, repeats: false);
+        locationTimer = Timer.scheduledTimer(timeInterval: activityManager.isStationary ? stationaryTimout : interval, target: self, selector: #selector(LocationManager.restartUpdates), userInfo: nil, repeats: false);
 
         if(stopUpdateTimer != nil) {
             stopUpdateTimer.invalidate();
             stopUpdateTimer = nil;
         }
 
-        stopUpdateTimer = NSTimer.scheduledTimerWithTimeInterval(syncSeconds, target: self, selector: #selector(LocationManager.syncAfterXSeconds), userInfo: nil, repeats: false);
+        stopUpdateTimer = Timer.scheduledTimer(timeInterval: syncSeconds, target: self, selector: #selector(LocationManager.syncAfterXSeconds), userInfo: nil, repeats: false);
     }
 
     func restartUpdates() {
@@ -464,30 +464,30 @@ class LocationManager : NSObject, CLLocationManagerDelegate {
         log("Stopped Location Updates After \(syncSeconds)");
     }
 
-    func locationManagerDidPauseLocationUpdates(manager: CLLocationManager) {
+    func locationManagerDidPauseLocationUpdates(_ manager: CLLocationManager) {
         log("Location Manager Paused Location Updates");
     }
 
-    func locationManagerDidResumeLocationUpdates(manager: CLLocationManager) {
+    func locationManagerDidResumeLocationUpdates(_ manager: CLLocationManager) {
         log("Location Manager Resumed Location Updates");
     }
 
-    func locationManager(manager: CLLocationManager, didFailWithError error: NSError) {
-        log("LOCATION ERROR: \(error.description)");
+    func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
+        log("LOCATION ERROR: \(error.localizedDescription)");
 
-        locationCommandDelegate?.runInBackground({
+        locationCommandDelegate?.run(inBackground: {
 
             var result:CDVPluginResult?;
 
-            result = CDVPluginResult(status: CDVCommandStatus_ERROR, messageAsString: error.description);
-            result!.setKeepCallbackAsBool(true);
-            locationCommandDelegate?.sendPluginResult(result, callbackId:locationUpdateCallback);
+            result = CDVPluginResult(status: CDVCommandStatus_ERROR, messageAs: error.localizedDescription);
+            result!.setKeepCallbackAs(true);
+            locationCommandDelegate?.send(result, callbackId:locationUpdateCallback);
         });
 
 
     }
-    func locationManager(manager: CLLocationManager, didFinishDeferredUpdatesWithError error: NSError?) {
-        log("Location Manager FAILED deferred \(error!.description)");
+    func locationManager(_ manager: CLLocationManager, didFinishDeferredUpdatesWithError error: Error?) {
+        log("Location Manager FAILED deferred \(error!.localizedDescription)");
     }
 
     func requestLocationPermissions() {
@@ -523,17 +523,17 @@ class ActivityManager : NSObject {
         }
     }
     
-    func confidenceToInt(confidence : CMMotionActivityConfidence) -> Int {
+    func confidenceToInt(_ confidence : CMMotionActivityConfidence) -> Int {
         var confidenceMult = 0;
         
         switch(confidence) {
-            case CMMotionActivityConfidence.High :
+            case CMMotionActivityConfidence.high :
                 confidenceMult = 100;
                 break;
-            case CMMotionActivityConfidence.Medium :
+            case CMMotionActivityConfidence.medium :
                 confidenceMult = 50;
                 break;
-            case CMMotionActivityConfidence.Low :
+            case CMMotionActivityConfidence.low :
                 confidenceMult = 0;
                 break;
             default:
@@ -544,11 +544,11 @@ class ActivityManager : NSObject {
         return confidenceMult;
     }
     
-    func getActivityConfidence(detectedActivity : Bool, multiplier : Int) -> Int {
+    func getActivityConfidence(_ detectedActivity : Bool, multiplier : Int) -> Int {
         return (detectedActivity ? 1 : 0) * multiplier;
     }
     
-    func activitiesToArray(data:CMMotionActivity) -> NSDictionary {
+    func activitiesToArray(_ data:CMMotionActivity) -> NSDictionary {
         let confidenceMult = self.confidenceToInt(data.confidence);
         
         var detectedActivities:Dictionary = [
@@ -566,24 +566,24 @@ class ActivityManager : NSObject {
         
         log("Received Detected Activities : \(detectedActivities)");
         
-        return detectedActivities;
+        return detectedActivities as NSDictionary;
     }
 
-    func sendActivitiesToCallback(activities : NSDictionary) {
+    func sendActivitiesToCallback(_ activities : NSDictionary) {
         if(activityCommandDelegate != nil) {
-            activityCommandDelegate?.runInBackground({
+            activityCommandDelegate?.run(inBackground: {
                 
                 var result:CDVPluginResult?;
                 
-                result = CDVPluginResult(status: CDVCommandStatus_OK, messageAsDictionary:activities as [NSObject: AnyObject]);
-                result!.setKeepCallbackAsBool(true);
-                activityCommandDelegate?.sendPluginResult(result, callbackId:activityUpdateCallback);
+                result = CDVPluginResult(status: CDVCommandStatus_OK, messageAs:activities as! [AnyHashable: Any]);
+                result!.setKeepCallbackAs(true);
+                activityCommandDelegate?.send(result, callbackId:activityUpdateCallback);
             });
         }
     }
     
     func startDetection() {
-        NSLog("Activity Manager - Starting Detection %@", self.available);
+        log("Activity Manager - Starting Detection : \( self.available)");
         if(useActivityDetection == false) {
             return;
         }
@@ -591,9 +591,9 @@ class ActivityManager : NSObject {
         if(self.available) {
             self.updating = true;
             
-            manager!.startActivityUpdatesToQueue(NSOperationQueue()) { data in
+            manager!.startActivityUpdates(to: OperationQueue()) { data in
                 if let data = data {
-                    dispatch_async(dispatch_get_main_queue(), {
+                    DispatchQueue.main.async(execute: {
                         if(data.stationary == true) {
                             self.isStationary = true;
                         } else {
@@ -624,16 +624,16 @@ class ActivityManager : NSObject {
     }
 }
 
-var backgroundTimer: NSTimer!
-var locationTimer: NSTimer!
-var stopUpdateTimer: NSTimer!
-var syncSeconds:NSTimeInterval = 2;
+var backgroundTimer: Timer!
+var locationTimer: Timer!
+var stopUpdateTimer: Timer!
+var syncSeconds:TimeInterval = 2;
 
 
 //Task Manager Singleton
 class TaskManager : NSObject {
 
-    let priority = DISPATCH_QUEUE_PRIORITY_HIGH;
+    let priority = DispatchQueue.GlobalQueuePriority.high;
 
     var _bgTaskList = [Int]();
     var _masterTaskId = UIBackgroundTaskInvalid;
@@ -641,12 +641,12 @@ class TaskManager : NSObject {
     func beginNewBackgroundTask() -> UIBackgroundTaskIdentifier {
         //log("beginNewBackgroundTask called");
 
-        let app = UIApplication.sharedApplication();
+        let app = UIApplication.shared;
 
         var bgTaskId = UIBackgroundTaskInvalid;
 
-        if(app.respondsToSelector("beginBackgroundTaskWithExpirationHandler")) {
-            bgTaskId = app.beginBackgroundTaskWithExpirationHandler({
+        if(app.responds(to: "beginBackgroundTaskWithExpirationHandler")) {
+            bgTaskId = app.beginBackgroundTask(expirationHandler: {
                 log("Background task \(bgTaskId) expired");
             });
             if(self._masterTaskId == UIBackgroundTaskInvalid) {
@@ -670,16 +670,16 @@ class TaskManager : NSObject {
         self.drainBGTaskList(true);
     }
 
-    func drainBGTaskList(all:Bool){
-        let app = UIApplication.sharedApplication();
-        if(app.respondsToSelector("endBackgroundTask")) {
+    func drainBGTaskList(_ all:Bool){
+        let app = UIApplication.shared;
+        if(app.responds(to: "endBackgroundTask")) {
             let count = self._bgTaskList.count;
 
             for _ in 0 ..< count {
                 let bgTaskId = self._bgTaskList[0] as Int;
                 log("Ending Background Task  with ID \(bgTaskId)");
                 app.endBackgroundTask(bgTaskId);
-                self._bgTaskList.removeAtIndex(0);
+                self._bgTaskList.remove(at: 0);
             }
 
             if(self._bgTaskList.count > 0) {
@@ -702,15 +702,15 @@ class NotificationManager : NSObject {
 
     static var manager = NotificationManager();
 
-    func notify(text: String) {
+    func notify(_ text: String) {
         if(debug == true) {
             log("Sending Notification");
             let notification = UILocalNotification();
-            notification.timeZone = NSTimeZone.defaultTimeZone();
+            notification.timeZone = TimeZone.current;
             notification.soundName = UILocalNotificationDefaultSoundName;
             notification.alertBody = text;
 
-            UIApplication.sharedApplication().scheduleLocalNotification(notification);
+            UIApplication.shared.scheduleLocalNotification(notification);
         }
     }
 }
